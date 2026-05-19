@@ -12,7 +12,8 @@ import {
   LineChart,
   Line,
   Cell,
-  Legend
+  Legend,
+  ResponsiveContainer
 } from "recharts";
 
 function App() {
@@ -24,7 +25,7 @@ function App() {
     setLoading(true);
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/predict",
+        `${import.meta.env.VITE_API_URL}/predict`,
         null,
         { params: { model_name: model } }
       );
@@ -48,6 +49,9 @@ function App() {
           <select onChange={(e) => setModel(e.target.value)}>
             <option value="logistic_regression">Logistic Regression</option>
             <option value="linear_regression">Linear Regression</option>
+            <option value="decision_tree">Decision Tree</option>
+            <option value="knn">KNN</option>
+            <option value="svm">SVM</option>
           </select>
 
           <button onClick={handlePredict}>
@@ -56,71 +60,142 @@ function App() {
         </div>
       </div>
 
-      {/* ================= LOGISTIC REGRESSION ================= */}
-      {data && data.accuracy && data.confusion_matrix && (
-        <div className="card">
-          <h3>Classification Performance</h3>
+      {/* ================= CLASSIFICATION ================= */}
+      {data && data.type === "classification" && (
+        <>
+          {/* Metrics */}
+          <div className="card">
+            <h3>Classification Performance</h3>
 
-          <div style={{ display: "flex", gap: "20px" }}>
-            <div><strong>Accuracy:</strong> {data.accuracy.toFixed(2)}</div>
-            <div><strong>Precision:</strong> {data.precision.toFixed(2)}</div>
-            <div><strong>Recall:</strong> {data.recall.toFixed(2)}</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+              {data.metrics?.accuracy && (
+                <div><strong>Accuracy:</strong> {data.metrics.accuracy.toFixed(2)}</div>
+              )}
+              {data.metrics?.precision && (
+                <div><strong>Precision:</strong> {data.metrics.precision.toFixed(2)}</div>
+              )}
+              {data.metrics?.recall && (
+                <div><strong>Recall:</strong> {data.metrics.recall.toFixed(2)}</div>
+              )}
+            </div>
           </div>
 
-          <BarChart
-            width={500}
-            height={300}
-            data={[
-              { name: "Correct Churn(TP)", value: data.confusion_matrix.TP },
-              { name: "Correct No Churn(TN)", value: data.confusion_matrix.TN },
-              { name: "Wrong Churn(FP)", value: data.confusion_matrix.FP },
-              { name: "Missed Churn(FN)", value: data.confusion_matrix.FN }
-            ]}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip />
-            <Bar dataKey="value">
-              <Cell fill="#4CAF50" />   {/* Correct */}
-              <Cell fill="#193b23" />
-              <Cell fill="#d48c7c" />   {/* Wrong */}
-              <Cell fill="#FF5733" />
-            </Bar>
-          </BarChart>
-                <p>
-  Model correctly identified {data.confusion_matrix.TP + data.confusion_matrix.TN} cases
-  and made {data.confusion_matrix.FP + data.confusion_matrix.FN} mistakes.
-</p>
-        </div>
-        
+          {/* GRID START */}
+          <div className="grid">
+
+            {/* Confusion Matrix */}
+            {data.metrics?.confusion_matrix && (
+              <div className="card">
+                <h3>Confusion Matrix</h3>
+
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart
+                    data={[
+                      { name: "TP", value: data.metrics.confusion_matrix.TP },
+                      { name: "TN", value: data.metrics.confusion_matrix.TN },
+                      { name: "FP", value: data.metrics.confusion_matrix.FP },
+                      { name: "FN", value: data.metrics.confusion_matrix.FN }
+                    ]}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="value">
+                      <Cell fill="#4CAF50" />
+                      <Cell fill="#2E7D32" />
+                      <Cell fill="#FF9800" />
+                      <Cell fill="#F44336" />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {/* Prediction Distribution */}
+            {data.predictions && (
+              <div className="card">
+                <h3>Prediction Distribution</h3>
+
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart
+                    data={[
+                      {
+                        name: "Class 0",
+                        value: data.predictions.filter(p => p === 0).length
+                      },
+                      {
+                        name: "Class 1",
+                        value: data.predictions.filter(p => p === 1).length
+                      }
+                    ]}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="value" fill="#2196F3" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {/* Accuracy */}
+            {data.metrics?.accuracy && (
+              <div className="card">
+                <h3>Accuracy</h3>
+
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart
+                    data={[
+                      { name: data.model, accuracy: data.metrics.accuracy }
+                    ]}
+                  >
+                    <XAxis dataKey="name" />
+                    <YAxis domain={[0, 1]} />
+                    <Tooltip />
+                    <Bar dataKey="accuracy" fill="#4CAF50" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+          </div>
+        </>
       )}
 
-      {/* ================= LINEAR REGRESSION ================= */}
-      {data && data.mse && data.actual && data.predicted && (
-        <div className="card">
-          <h3>Regression Performance</h3>
+      {/* ================= REGRESSION ================= */}
+      {data && data.type === "regression" && (
+        <>
+          <div className="card">
+            <h3>Regression Performance</h3>
+            <p><strong>MSE:</strong> {data.metrics?.mse.toFixed(4)}</p>
+          </div>
 
-          <p><strong>MSE:</strong> {data.mse.toFixed(4)}</p>
+          <div className="grid">
+            <div className="card">
+              <h3>Actual vs Predicted</h3>
 
-          <LineChart
-            width={600}
-            height={300}
-            data={data.actual.map((val, i) => ({
-              index: i,
-              actual: val,
-              predicted: data.predicted[i]
-            }))}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="index" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Line type="monotone" dot={{ r: 3 }} dataKey="actual" name="Actual" stroke="#4CAF50" strokeWidth={2} />
-            <Line type="monotone" dot={{ r: 5 }} dataKey="predicted" name="Predicted" stroke="#2196F3" strokeWidth={2} />
-          </LineChart>
-        </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart
+                  data={data.actual.map((val, i) => ({
+                    index: i,
+                    actual: val,
+                    predicted: data.predictions[i]
+                  }))}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="index" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="actual" stroke="#4CAF50" />
+                  <Line type="monotone" dataKey="predicted" stroke="#2196F3" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </>
       )}
 
     </div>

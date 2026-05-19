@@ -4,45 +4,81 @@ body {
   background-color: #f5f6fa;
 }
 
+/* Container */
 .container {
-  max-width: 1000px;
-  margin: auto;
-  padding: 20px;
+  width: 100%;
+  padding: 16px;
+  box-sizing: border-box;
 }
 
+/* Header */
+.header {
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+/* Card */
 .card {
   background: white;
-  padding: 20px;
-  border-radius: 10px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
-.header {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 20px;
-}
-
+/* Controls */
 .controls {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap; /* 👈 important for mobile */
 }
 
+/* Button */
 button {
-  padding: 8px 16px;
+  padding: 10px;
   border: none;
   background-color: #4CAF50;
   color: white;
-  border-radius: 5px;
+  border-radius: 6px;
   cursor: pointer;
+  flex: 1; /* 👈 makes it responsive */
+  min-width: 120px;
 }
 
 button:hover {
   background-color: #45a049;
 }
 
+/* Select */
 select {
-  padding: 8px;
-  border-radius: 5px;
+  padding: 10px;
+  border-radius: 6px;
+  flex: 1;
+  min-width: 160px;
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .header {
+    font-size: 18px;
+  }
+
+  .card {
+    padding: 12px;
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
 }
